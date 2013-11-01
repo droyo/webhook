@@ -1,0 +1,25 @@
+webhook executes a program whenever it receives a webhook request
+from Github.  The child program is run with repository information
+set in its environment, and with the json commit data written to
+its standard input. webhook guarantees that only one child program
+is run at a time.
+
+BUILD:
+
+	$ go get aqwari.net/cmd/webhook
+
+RUNNING:
+
+The best way to run webhook is under a supervisor. Any one will do,
+choose whatever you already have installed. Some popular supervisors
+are
+
+	- runit
+	- daemontools
+	- supervisord
+	- upstart (part of Ubuntu and RHEL 6 base install)
+	- systemd (ugh)
+	- s6
+
+Provided in this repository are example files to run webhook under
+upstart and daemontools.

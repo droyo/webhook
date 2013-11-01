@@ -1,0 +1,19 @@
+# example upstart file
+
+start on runlevel [2345]
+stop on shutdown
+respawn
+
+# This is not available on RHEL6. For that, you
+# need to work use su, runuser, or setuidgid
+setuid webhook
+
+# Trick to log to syslog
+script
+  set -e
+  mkfifo /tmp/webhook-log-fifo
+  ( logger -t webhook </tmp/myservice-log-fifo & )
+  exec >/tmp/myservice-log-fifo 2>&1
+  rm /tmp/myservice-log-fifo
+  exec /usr/local/bin/webhook /path/to/my/program arg1 arg2 arg3
+end script

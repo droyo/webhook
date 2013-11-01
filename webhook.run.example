@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec 2>&1
+exec setuidgid webhook /usr/local/bin/webhook /path/to/my/program arg1 arg2 arg3

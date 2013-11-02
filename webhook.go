@@ -107,17 +107,21 @@ func (srv Server) ServeHTTP (w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", 405)
 		return
 	}
-	input, _, err := r.FormFile("payload")
-	if err != nil {
-		log.Printf("(%s) Could not parse POST body: %s", r.RemoteAddr, err)
-		http.Error(w, "Bad request", 400)
-		return
+	if err := r.ParseForm(); err != nil {
+	  log.Printf("(%s) Could not parse POST: %s", r.RemoteAddr, err)
+	  http.Error(w, "Bad request", 400)
+	  return
 	}
-	dec := json.NewDecoder(input)
-	if err := dec.Decode(&hook); err != nil {
-		log.Printf("(%s) Error parsing JSON %s", r.RemoteAddr, err)
-		http.Error(w, "Bad request", 400)
-		return
+	payload := r.FormValue("payload")
+	if payload == "" {
+	  log.Printf("(%s) No payload in request")
+	  http.Error(w, "Bad request", 400)
+	  return
+	}
+	if err := json.Unmarshal([]byte(payload), &hook); err != nil {
+	  log.Printf("(%s) Error parsing request: %s", r.RemoteAddr, err)
+	  http.Error(w, "Bad request", 400)
+	  return
 	}
 	go srv.RunHook(hook, r)
 }

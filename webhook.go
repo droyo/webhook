@@ -1,7 +1,5 @@
 // webhook is a github Webhook listener that runs subordinate
-// scripts when a webhook is received. If webhooks for the same
-// repository are received during the waiting period, they are
-// coalesced into the same call.
+// scripts when a webhook is received.
 package main
 
 import (

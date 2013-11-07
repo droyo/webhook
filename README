@@ -6,7 +6,7 @@ is run at a time.
 
 BUILD:
 
-	$ go get aqwari.net/cmd/webhook
+	$ go build -o webhook
 
 RUNNING:
 

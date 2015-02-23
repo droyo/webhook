@@ -5,8 +5,8 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"log"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -20,14 +20,14 @@ type Person struct {
 }
 
 type Commit struct {
-	ID        string `json:"id"`
-	Message   string `json:"message"`
+	ID        string   `json:"id"`
+	Message   string   `json:"message"`
 	Added     []string `json:"added"`
 	Removed   []string `json:"removed"`
 	Modified  []string `json:"modified"`
-	Timestamp string `json:"timestamp"`
-	Url       string `json:"url"`
-	Author    Person `json:"author"`
+	Timestamp string   `json:"timestamp"`
+	Url       string   `json:"url"`
+	Author    Person   `json:"author"`
 }
 
 type Repository struct {
@@ -76,61 +76,51 @@ func main() {
 		filter = flag.String("f", ".*", "Repository URLs to listen for (regex)")
 	)
 	flag.Parse()
-	
+
 	if len(flag.Args()) < 1 {
 		flag.Usage()
 	}
-	
+
 	pattern, err := regexp.Compile(*filter)
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	srv := Server{
 		filter: pattern,
 		prog:   flag.Args(),
 	}
-	
+
 	http.Handle("/", srv)
 	log.Print("Listening on ", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
-func (srv Server) ServeHTTP (w http.ResponseWriter, r *http.Request) {
+func (srv Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var hook WebHook
 	log.Printf("New connection from %s", r.RemoteAddr)
-	
+
 	if r.Method != "POST" {
 		log.Printf("(%s) Rejecting non-POST request", r.RemoteAddr)
 		http.Error(w, "Method not allowed", 405)
 		return
 	}
-	if err := r.ParseForm(); err != nil {
-	  log.Printf("(%s) Could not parse POST: %s", r.RemoteAddr, err)
-	  http.Error(w, "Bad request", 400)
-	  return
-	}
-	payload := r.FormValue("payload")
-	if payload == "" {
-	  log.Printf("(%s) No payload in request")
-	  http.Error(w, "Bad request", 400)
-	  return
-	}
-	if err := json.Unmarshal([]byte(payload), &hook); err != nil {
-	  log.Printf("(%s) Error parsing request: %s", r.RemoteAddr, err)
-	  http.Error(w, "Bad request", 400)
-	  return
+	d := json.NewDecoder(r.Body)
+	if err := d.Decode(&hook); err != nil {
+		log.Printf("(%s) Error parsing request: %s", r.RemoteAddr, err)
+		http.Error(w, "Bad request", 400)
+		return
 	}
 	go srv.RunHook(hook, r)
 }
 
 func (srv Server) RunHook(hook WebHook, r *http.Request) {
 	url := hook.Repo.Url
-	if ! srv.filter.MatchString(url) {
+	if !srv.filter.MatchString(url) {
 		log.Printf("Discarding non-matching request %s from %s", url, r.RemoteAddr)
 		return
 	}
-	
+
 	cmd := exec.Command(srv.prog[0], srv.prog[1:]...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
